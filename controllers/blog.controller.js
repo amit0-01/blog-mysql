@@ -1,5 +1,6 @@
 const db = require('../db')
 const { promisify } = require('util'); 
+const uploadOnCloudinary = require('../config/cloudinaryConfig')
 
 // GET ALL BLOGS
 const getAll = (req, res) => {
@@ -18,68 +19,67 @@ const addBlog = async (req, res) => {
     const { title, content } = req.body;
 
     // Check if the file exists
-    if (!req.file) {
+    const coverImageFile = req.file; 
+    console.log('coverImage', coverImageFile);
+    
+    if (!coverImageFile) {
         return res.status(400).json({
             success: false,
-            message: 'File not uploaded'
+            message: 'Cover image file is required',
         });
     }
 
-    // Assuming your uploads folder is accessible via an endpoint like '/uploads'
-    // Get the base URL dynamically (in development, it would be something like 'http://localhost:3000')
-    const baseURL = `${req.protocol}://${req.get('host')}`;
-    const coverImageURL = `${baseURL}/uploads/${req.file.filename}`;
+    let uploadCoverImage;
+    try {
+        // Upload the cover image to Cloudinary using the function defined
+        uploadCoverImage = await uploadOnCloudinary(coverImageFile.path);
 
-    console.log('coverImageURL', coverImageURL);
+        if (!uploadCoverImage) {
+            throw new Error('Failed to upload image to Cloudinary');
+        }
+    } catch (error) {
+        console.error('Error uploading to Cloudinary:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to upload image to Cloudinary',
+        });
+    }
 
-    // Insert the blog post into the database
-    db.run('INSERT INTO blogs (title, content, createdBy, coverImageURL) VALUES (?, ?, ?, ?)', 
-        [title, content, coverImageURL], function (err) {
+    const coverImageURL = uploadCoverImage.secure_url; // Get the uploaded image URL from Cloudinary
+
+    // Insert the blog post into your database
+    db.run(
+        'INSERT INTO blogs (title, content,coverImageURL, createdBy ) VALUES (?, ?, ?, ?)',
+        [title, content,  coverImageURL], // Assuming req.user.id is available for authentication
+        function (err) {
             if (err) {
                 console.error('Error inserting blog:', err);
                 return res.status(500).json({
                     success: false,
-                    message: 'Server error'
+                    message: 'Server error while inserting blog post',
                 });
             }
 
-            // Retrieve the newly inserted blog post details
             const newBlogId = this.lastID;
             db.get('SELECT * FROM blogs WHERE id = ?', [newBlogId], (err, blog) => {
                 if (err) {
                     console.error('Error retrieving blog:', err);
                     return res.status(500).json({
                         success: false,
-                        message: 'Server error'
+                        message: 'Server error while retrieving blog post',
                     });
                 }
 
-                // Retrieve user details
-                db.get('SELECT * FROM users WHERE id = ?', [blog.createdBy], (err, user) => {
-                    if (err) {
-                        console.error('Error retrieving user:', err);
-                        return res.status(500).json({
-                            success: false,
-                            message: 'Server error'
-                        });
-                    }
-
-                    // Send a success response with the blog and user information
-                    return res.status(201).json({
-                        success: true,
-                        message: 'Blog created successfully',
-                        blog: {
-                            ...blog,
-                            coverImageURL, // Send the full URL to the frontend
-                        }
-                    });
+                // Send success response with the blog data and cover image URL
+                return res.status(201).json({
+                    success: true,
+                    message: 'Blog created successfully',
+                    blog: { ...blog, coverImageURL },
                 });
             });
-        });
+        }
+    );
 };
-
-
-
 const getBlogById = async(req, res) => {
     const blogId = req.params.id;
 
@@ -117,7 +117,7 @@ const commentBlog = async (req, res) => {
     const { content } = req.body;
 
     try {
-        await dbRun('INSERT INTO comments (content, blogId, createdBy) VALUES (?, ?, ?)', [content, blogId, req.user.id]);
+        await dbRun('INSERT INTO comments (content, blogId, createdBy) VALUES (?, ?, ?)', [content, blogId]);
         return res.redirect(`/blog/${blogId}`);
     } catch (err) {
         console.error('Error inserting comment:', err);

@@ -24,7 +24,7 @@ router.post('/', upload.single('coverImage'), addBlog);
 
 router.get('/:id', getBlogById);
 
-router.post('/comment/:blogId',checkForAuthenticationCookie('authToken'), commentBlog);
+router.post('/comment/:blogId', commentBlog);
 
 router.delete('/:id',deleteBlog)
 
