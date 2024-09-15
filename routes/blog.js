@@ -2,7 +2,6 @@ const { Router } = require('express');
 const db = require('../db');
 const {getAll, addBlog, getBlogById, commentBlog, deleteBlog} = require('../controllers/blog.controller')
 const upload = require('../middleware/multer.middleware')
-const { checkForAuthenticationCookie } = require('../middleware/authentication');
 
   
 const router = Router();

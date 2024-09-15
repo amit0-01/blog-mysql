@@ -1,16 +1,13 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-// Create a new SQLite database connection
 const db = new sqlite3.Database(path.join(__dirname, 'my-database.db'), (err) => {
     if (err) {
         console.error('Error opening database:', err.message);
     } else {
         console.log('Connected to SQLite database');
 
-        // Create the tables if they do not exist
         db.serialize(() => {
-            // Create the blogs table with the createdBy column
             db.run(`CREATE TABLE IF NOT EXISTS blogs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 title TEXT NOT NULL,
@@ -26,7 +23,6 @@ const db = new sqlite3.Database(path.join(__dirname, 'my-database.db'), (err) =>
                 }
             });
 
-            // Create the users table
             db.run(`CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 fullName TEXT NOT NULL,
@@ -40,7 +36,6 @@ const db = new sqlite3.Database(path.join(__dirname, 'my-database.db'), (err) =>
                 }
             });
 
-            // Create the comments table
             db.run(`CREATE TABLE IF NOT EXISTS comments (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 blogId INTEGER,
@@ -59,5 +54,4 @@ const db = new sqlite3.Database(path.join(__dirname, 'my-database.db'), (err) =>
     }
 });
 
-// Export the database object
 module.exports = db;

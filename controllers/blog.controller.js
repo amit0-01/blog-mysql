@@ -50,7 +50,7 @@ const addBlog = async (req, res) => {
     // Insert the blog post into your database
     db.run(
         'INSERT INTO blogs (title, content,coverImageURL, createdBy ) VALUES (?, ?, ?, ?)',
-        [title, content,  coverImageURL], // Assuming req.user.id is available for authentication
+        [title, content,  coverImageURL],
         function (err) {
             if (err) {
                 console.error('Error inserting blog:', err);
