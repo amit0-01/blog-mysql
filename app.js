@@ -3,8 +3,16 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const session = require('express-session');
+const cors = require('cors');  // Add this line
 
 const app = express();
+
+// Enable CORS with specific options (or allow all origins)
+app.use(cors({
+    origin: '*', // Replace '*' with specific origin if needed, e.g., 'https://yourfrontenddomain.com'
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow specific HTTP methods
+    allowedHeaders: ['Content-Type', 'Authorization'], // Specify which headers are allowed
+}));
 
 // Middleware
 app.use(logger('dev'));
@@ -17,7 +25,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Session handling (if needed)
 app.use(session({
-    secret: 'your-session-secret', // Replace with your session secret
+    secret: 'your-session-secret',
     resave: false,
     saveUninitialized: true,
 }));
